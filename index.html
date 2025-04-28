@@ -1,0 +1,94 @@
+n<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Auto Tag Replace & Copy</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #333;
+    }
+    textarea {
+      width: 100%;
+      min-height: 200px;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+    .toast {
+      visibility: hidden;
+      min-width: 160px;
+      background-color: #4CAF50;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 10px;
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      font-size: 15px;
+    }
+    .toast.show {
+      visibility: visible;
+      animation: fadein 0.5s, fadeout 0.5s 2s;
+    }
+    @keyframes fadein {
+      from {top: 0; opacity: 0;}
+      to {top: 20px; opacity: 1;}
+    }
+    @keyframes fadeout {
+      from {top: 20px; opacity: 1;}
+      to {top: 0; opacity: 0;}
+    }
+  </style>
+</head>
+<body>
+
+<h2>Paste Your Deal Content Below 👇</h2>
+
+<textarea id="dealInput" placeholder="Paste your text here..."></textarea>
+
+<div id="toast" class="toast">Copied to clipboard!</div>
+
+<script>
+const dealInput = document.getElementById('dealInput');
+const toast = document.getElementById('toast');
+
+dealInput.addEventListener('paste', async function(event) {
+  // Wait for the paste to complete
+  setTimeout(async () => {
+    let text = dealInput.value;
+
+    // Replace only the tag= value
+    text = text.replace(/([?&])tag=[^&\n]+/gi, '$1tag=dealmatch-21');
+
+    // Clean blank lines if you want (optional)
+    text = text.split('\n').map(line => line.trim()).filter(line => line.length > 0).join('\n\n');
+
+    // Set the modified text back to the textarea
+    dealInput.value = text;
+
+    // Copy to clipboard
+    await navigator.clipboard.writeText(text);
+
+    // Show toast
+    toast.classList.add('show');
+    setTimeout(() => {
+      toast.classList.remove('show');
+    }, 2500);
+  }, 100); // slight delay to let paste finish
+});
+</script>
+
+</body>
+</html>
