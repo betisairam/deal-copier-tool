@@ -1,93 +1,117 @@
-n<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Auto Tag Replace & Copy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#4CAF50">
+  <title>Deal Copier Tool</title>
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+  
+  <!-- PWA Icons (optional for install prompt) -->
+  <link rel="icon" href="icon.png" sizes="192x192">
+  
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
-      background: #f5f5f5;
-    }
-    h2 {
-      text-align: center;
-      margin-bottom: 20px;
-      color: #333;
+      background: #f9f9f9;
     }
     textarea {
       width: 100%;
-      min-height: 200px;
-      padding: 12px;
+      height: 200px;
+      padding: 10px;
       font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      resize: vertical;
-      box-sizing: border-box;
+      margin-top: 20px;
     }
-    .toast {
+    #toast {
       visibility: hidden;
-      min-width: 160px;
-      background-color: #4CAF50;
+      min-width: 250px;
+      background-color: #333;
       color: #fff;
       text-align: center;
-      border-radius: 6px;
-      padding: 10px;
+      border-radius: 8px;
+      padding: 12px;
       position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 9999;
-      font-size: 15px;
+      z-index: 1;
+      left: 50%;
+      bottom: 30px;
+      transform: translateX(-50%);
+      font-size: 16px;
+      transition: visibility 0s, opacity 0.5s linear;
+      opacity: 0;
     }
-    .toast.show {
+    #toast.show {
       visibility: visible;
-      animation: fadein 0.5s, fadeout 0.5s 2s;
-    }
-    @keyframes fadein {
-      from {top: 0; opacity: 0;}
-      to {top: 20px; opacity: 1;}
-    }
-    @keyframes fadeout {
-      from {top: 20px; opacity: 1;}
-      to {top: 0; opacity: 0;}
+      opacity: 1;
     }
   </style>
 </head>
 <body>
 
-<h2>Paste Your Deal Content Below 👇</h2>
+<h2>Paste Your Deal Text Below:</h2>
+<textarea id="inputText" placeholder="Paste your content here..."></textarea>
 
-<textarea id="dealInput" placeholder="Paste your text here..."></textarea>
-
-<div id="toast" class="toast">Copied to clipboard!</div>
+<div id="toast">Copied!</div>
 
 <script>
-const dealInput = document.getElementById('dealInput');
-const toast = document.getElementById('toast');
+  const textarea = document.getElementById('inputText');
+  const toast = document.getElementById('toast');
 
-dealInput.addEventListener('paste', async function(event) {
-  // Wait for the paste to complete
-  setTimeout(async () => {
-    let text = dealInput.value;
+  textarea.addEventListener('paste', async function(event) {
+    event.preventDefault();
+    let pasteData = (event.clipboardData || window.clipboardData).getData('text');
 
-    // Replace only the tag= value
-    text = text.replace(/([?&])tag=[^&\n]+/gi, '$1tag=dealmatch-21');
+    // Replace the tag part only
+    pasteData = pasteData.replace(/(https:\/\/www\.amazon\.in\/dp\/[A-Z0-9]+[^ ]*?)\?[^ ]*(tag=)[^& ]+/gi, (match, p1, p2) => {
+      return `${p1}?${p2}dealmatch-21`;
+    });
 
-    // Clean blank lines if you want (optional)
-    text = text.split('\n').map(line => line.trim()).filter(line => line.length > 0).join('\n\n');
+    // Insert the updated content
+    textarea.value = pasteData;
 
-    // Set the modified text back to the textarea
-    dealInput.value = text;
+    // Copy to clipboard and handle errors
+    try {
+      await navigator.clipboard.writeText(pasteData);
+      showToast("Copied!");
+    } catch (err) {
+      showToast("Failed to copy!");
+    }
 
-    // Copy to clipboard
-    await navigator.clipboard.writeText(text);
+    // Start countdown
+    let countdown = 7;
+    const countdownInterval = setInterval(() => {
+      countdown--;
+      if (countdown > 0) {
+        showToast(`Clearing in ${countdown}...`);
+      } else {
+        clearInterval(countdownInterval);
+        textarea.value = '';
+        showToast("Cleared!");
+        textarea.focus();
+      }
+    }, 1000);
+  });
 
-    // Show toast
+  function showToast(message) {
+    toast.textContent = message;
     toast.classList.add('show');
     setTimeout(() => {
       toast.classList.remove('show');
-    }, 2500);
-  }, 100); // slight delay to let paste finish
-});
+    }, 900);
+  }
+
+  // Register Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js').then((registration) => {
+        console.log('Service Worker registered with scope:', registration.scope);
+      }).catch((error) => {
+        console.log('Service Worker registration failed:', error);
+      });
+    });
+  }
 </script>
 
 </body>
